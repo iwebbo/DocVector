@@ -1,0 +1,27 @@
+apiVersion: v1
+entries:
+  docvector:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-02-09T22:14:36.900441695Z"
+    description: Document vectorization and RAG search platform with OpenSearch
+    digest: ae195cd1ba506d4a7a81940aecc7da5c8c9350ca335ed390671176ff5dfdfcf6
+    home: https://github.com/iwebbo/DocVector
+    icon: https://raw.githubusercontent.com/iwebbo/DocVector/main/icon.png
+    keywords:
+    - rag
+    - opensearch
+    - vectorization
+    - nlp
+    - ai
+    maintainers:
+    - email: aecodinglocal@gmail.com
+      name: DeVops Team
+    name: docvector
+    sources:
+    - https://github.com/iwebbo/DocVector
+    type: application
+    urls:
+    - https://iwebbo.github.io/DocVector/docvector-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-02-09T22:14:36.89979103Z"
