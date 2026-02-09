@@ -18,7 +18,15 @@ spec:
   {{- end }}
   {{- if $ingressConfig.ingress.tls }}
   tls:
-    {{- toYaml $ingressConfig.ingress.tls | nindent 4 }}
+    {{- range $ingressConfig.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- if .secretName }}
+      secretName: {{ .secretName }}
+      {{- end }}
+    {{- end }}
   {{- end }}
   rules:
     {{- range $ingressConfig.ingress.hosts }}
