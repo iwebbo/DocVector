@@ -72,22 +72,22 @@ jobs:
         Kubernetes deployment chart for DocVector (API + Frontend + OpenSearch integration).
         
         ## Add Repository
-```bash
+        ```bash
         helm repo add docvector https://${{ github.repository_owner }}.github.io/DocVector/
         helm repo update
-```
+        ```
         
         ## Install Chart
-```bash
+        ```bash
         helm upgrade --install docvector docvector/docvector \
           --namespace docvector \
           --create-namespace \
           -f values.yaml \
           -f ingress.yaml
-```
+          ```
 
         ## Default Values (values.yaml)
-```yaml
+        ```yaml
         # Default values for DocVector Helm chart
         replicaCount:
           api: 2
@@ -157,10 +157,10 @@ jobs:
           maxReplicas: 10
           targetCPUUtilizationPercentage: 70
           targetMemoryUtilizationPercentage: 80
-```
+          ```
 
         ## Ingress Configuration (ingress.yaml)
-```yaml
+        ```yaml
         ingress:
           enabled: true
           className: "nginx"
@@ -178,7 +178,7 @@ jobs:
           # - secretName: docvector-tls
           #   hosts:
           #     - docvector.your-domain.com
-```
+          ```
 
         ## Prerequisites
         
@@ -195,7 +195,7 @@ jobs:
         ## Quick Start
         
         ### 1. Clone and configure
-```bash
+        ```bash
         git clone https://github.com/${{ github.repository_owner }}/DocVector.git
         cd DocVector
         
@@ -204,29 +204,29 @@ jobs:
         
         # Edit domain
         vim ingress.yaml
-```
+        ```
         
         ### 2. Install
-```bash
+        ```bash
         helm install docvector docvector/docvector \
           -n docvector \
           --create-namespace \
           -f values.yaml \
           -f ingress.yaml
-```
+        ```
         
         ### 3. Verify
-```bash
+        ```bash
         kubectl get pods -n docvector
         kubectl get ingress -n docvector
-```
+        ```
         
         ## Deploy with Ansible (Generic Pipeline)
-```bash
+        ```bash
         ansible-playbook deploy_helm_generic.yml
         
         # Using: https://github.com/iwebbo/Ansible/tree/main/roles/deploy_helmchart_stack_standalone
-```
+        ```
         
         ## Chart Values
         
@@ -247,34 +247,34 @@ jobs:
         3. Push to `charts/**` → GitHub Actions packages and publishes chart
         
         ## Upgrade
-```bash
+        ```bash
         helm upgrade docvector docvector/docvector \
           -n docvector \
           -f values.yaml \
           -f ingress.yaml
-```
+        ```
         
         ## Uninstall
-```bash
+        ```bash
         helm uninstall docvector -n docvector
         kubectl delete namespace docvector
-```
+        ```
         
         ## Storage Class Options
         
         ### Auto-provisioning (Default)
-```yaml
+        ```yaml
         persistence:
           storageClass: "standard"  # or "gp2" on AWS, "managed-premium" on Azure
-```
+        ```
         
         ### Manual PV (for on-premise)
-```yaml
+        ```yaml
         # values.yaml
         persistence:
           storageClass: "local-storage"
-```
-```yaml
+        ```
+        ```yaml
         # pv-data.yaml
         apiVersion: v1
         kind: PersistentVolume
@@ -298,14 +298,14 @@ jobs:
                   operator: In
                   values:
                   - k8s-worker-01
-```
-```bash
+          ```
+        ```bash
         kubectl apply -f pv-data.yaml
         helm install docvector docvector/docvector -f values.yaml -f ingress.yaml
-```
+        ```
         
         ## Troubleshooting
-```bash
+        ```bash
         # Check pods
         kubectl get pods -n docvector
         
@@ -318,7 +318,7 @@ jobs:
         
         # Port-forward for local testing
         kubectl port-forward -n docvector svc/docvector-nginx 8080:80
-```
+        ```
         
         ## Support
         
