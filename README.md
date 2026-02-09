@@ -17,10 +17,18 @@ A multi‑format document ingestion pipeline for OpenSearch with automatic vecto
 
 ## Installation
 
+### ☸️ **Quick start with Kubernetes** *(Production-ready)*
+
+> **Helm Chart + Documentation**
+
+[ **Documentation Kubernetes officiel** →](https://iwebbo.github.io/DocVector/)
+
+### ☸️ **Quick Start with Docker**
+
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/iwebbo/DocVector.git
-cd DocVector
+    git clone https://github.com/iwebbo/DocVector.git
+    cd DocVector
 ```
 
 ### 2. Configure OpenSearch
@@ -43,32 +51,23 @@ docker-compose build
 docker-compose up -d
 ```
 
-### 4. Access
-
-Interface Web : **http://localhost:5000**
-
 ## Via the Web UI
 
-Upload – Drag & drop your files.
-Ingest – Click “Start Ingestion”.
-Search – Perform RAG search on your documents.
-OpenSearch Configuration
+- **Upload – Drag & drop your files**.
+- **Ingest – Click “Start Ingestion”.**
+- **Search – Perform RAG search on your documents.**
+
+##  OpenSearch Configuration
 Index Mapping
 The index is created automatically with the following settings:
 
-Embeddings: 384 dimensions (model all-MiniLM-L6-v2)
-k‑NN Engine: FAISS (compatible with OpenSearch 3.x)
-Distance metric: L2 (Euclidean)
-
+- **Embeddings: 384 dimensions (model all-MiniLM-L6-v2)**
+- **k‑NN Engine: FAISS (compatible with OpenSearch 3.x)**
+- **Distance metric: L2 (Euclidean)**
 
 ## Contribution
-
 Pull requests welcome !
 
-## License
+**Built with ❤️ for system administrators and DevOps engineers**
 
-MIT
-
-## Contact
-
-Pour questions : [votre-email]
+For questions, suggestions, or support, please open an issue or contact the maintainers.
