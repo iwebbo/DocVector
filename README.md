@@ -4,8 +4,9 @@ A multi‑format document ingestion pipeline for OpenSearch with automatic vecto
 
 ![License](https://img.shields.io/badge/MIT-00599C?style=for-the-badge&logo=MIT&logoColor=black)
 ![Python](https://img.shields.io/badge/Python-4EAA25?style=for-the-badge&logo=Python&logoColor=black)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-4EAA25?style=for-the-badge&logo=React&logoColor=black)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-4EAA25?style=for-the-badge&logo=Kubernetes&logoColor=black)
 ![Docker](https://img.shields.io/badge/Docker-0078D6?style=for-the-badge&logo=Docker&logoColor=black)
+![Opensearch](https://img.shields.io/badge/Opensearch-0078D6?style=for-the-badge&logo=Opensearch&logoColor=black)
 
 ## Features
 
