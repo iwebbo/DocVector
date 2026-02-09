@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocVector</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>DocVector</h1>
+                <span class="version">v2.0</span>
+            </div>
+            
+            <nav class="nav">
+                <button class="nav-item active" data-view="dashboard">Dashboard</button>
+                <button class="nav-item" data-view="upload">Upload</button>
+                <button class="nav-item" data-view="search">Search</button>
+            </nav>
+
+            <div class="status" id="status">
+                <div class="status-dot"></div>
+                <span>Connecting...</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h2 id="page-title">Dashboard</h2>
+                <button class="btn-icon" id="btn-refresh">Refresh</button>
+            </header>
+
+            <div class="content">
+                <!-- Dashboard -->
+                <div class="view active" id="view-dashboard">
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="metric-label">Documents</div>
+                            <div class="metric-value" id="metric-docs">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Index Size</div>
+                            <div class="metric-value" id="metric-size">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Index Name</div>
+                            <div class="metric-value small" id="metric-index">-</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Document Types</h3>
+                        <div id="stats-by-type"></div>
+                    </div>
+                </div>
+
+                <!-- Upload -->
+                <div class="view" id="view-upload">
+                    <div class="card">
+                        <h3>Upload Files</h3>
+                        
+                        <div class="upload-zone" id="upload-zone">
+                            <input type="file" id="file-input" multiple>
+                            <div class="upload-content">
+                                <p>Drop files here or click to browse</p>
+                                <small>Supported: PDF, Word, Excel, Markdown, Code, YAML</small>
+                            </div>
+                        </div>
+                        
+                        <div id="file-list"></div>
+                        
+                        <div class="button-group">
+                            <button id="btn-upload" class="btn" disabled>Upload Files</button>
+                            <button id="btn-clear" class="btn-secondary">Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Ingestion</h3>
+                        
+                        <label class="checkbox">
+                            <input type="checkbox" id="recreate-index">
+                            <span>Recreate index (delete existing data)</span>
+                        </label>
+                        
+                        <button id="btn-ingest" class="btn btn-success">Start Ingestion</button>
+                        
+                        <div id="log" class="log"></div>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="view" id="view-search">
+                    <div class="card">
+                        <h3>Search Documents</h3>
+                        
+                        <div class="search-bar">
+                            <input type="text" id="search-input" placeholder="Enter your query...">
+                            <input type="number" id="top-k" value="5" min="1" max="20" title="Results">
+                            <button id="btn-search" class="btn">Search</button>
+                        </div>
+                    </div>
+
+                    <div id="search-results"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

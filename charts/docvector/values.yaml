@@ -1,0 +1,100 @@
+# charts/docvector/values.yaml
+# Global settings
+replicaCount:
+  api: 2
+  nginx: 2
+
+# Container Registry
+registry: ghcr.io
+imagePullSecrets: []
+
+image:
+  api:
+    repository: ghcr.io/docvector-api
+    tag: "latest"
+    pullPolicy: Always
+  nginx:
+    repository: ghcr.io/docvector-nginx
+    tag: "latest"
+    pullPolicy: Always
+
+# Namespace
+namespace:
+  create: true
+  name: docvector
+
+# OpenSearch configuration
+opensearch:
+  host: "opensearch.opensearch.svc.cluster.local"
+  port: "9200"
+  user: "admin"
+  password: "ChangeMe123!"
+  useSSL: "true"
+  verifyCerts: "false"
+  indexName: "knowledge_base"
+
+# Storage
+persistence:
+  enabled: true
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
+  size: 10Gi
+
+# API Configuration
+api:
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Nginx Configuration
+nginx:
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  clientMaxBodySize: "100m"
+
+# Service
+service:
+  api:
+    type: ClusterIP
+    port: 8000
+  nginx:
+    type: ClusterIP
+    port: 80
+
+# Autoscaling (optionnel)
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

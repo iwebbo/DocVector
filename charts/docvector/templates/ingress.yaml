@@ -1,0 +1,38 @@
+# charts/docvector/templates/ingress.yaml
+{{- $ingressConfig := .Files.Get "ingress.yaml" | fromYaml }}
+{{- if $ingressConfig.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "docvector.fullname" . }}
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "docvector.labels" . | nindent 4 }}
+  {{- with $ingressConfig.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $ingressConfig.ingress.className }}
+  ingressClassName: {{ $ingressConfig.ingress.className }}
+  {{- end }}
+  {{- if $ingressConfig.ingress.tls }}
+  tls:
+    {{- toYaml $ingressConfig.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range $ingressConfig.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "docvector.fullname" $ }}-nginx
+                port:
+                  number: {{ $.Values.service.nginx.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

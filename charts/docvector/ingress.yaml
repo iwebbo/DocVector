@@ -1,0 +1,21 @@
+# charts/docvector/ingress.yaml
+ingress:
+  enabled: true
+  className: "nginx"  # ou "traefik"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    # Rate limiting (optionnel)
+    # nginx.ingress.kubernetes.io/limit-rps: "10"
+    # SSL/TLS avec cert-manager (optionnel)
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: docvector.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: docvector-tls
+  #   hosts:
+  #     - docvector.your-domain.com

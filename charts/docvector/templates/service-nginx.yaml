@@ -1,0 +1,19 @@
+# charts/docvector/templates/service-nginx.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "docvector.fullname" . }}-nginx
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "docvector.labels" . | nindent 4 }}
+    component: nginx
+spec:
+  type: {{ .Values.service.nginx.type }}
+  ports:
+  - port: {{ .Values.service.nginx.port }}
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "docvector.selectorLabels" . | nindent 4 }}
+    component: nginx

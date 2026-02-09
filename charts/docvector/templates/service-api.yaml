@@ -1,0 +1,19 @@
+# charts/docvector/templates/service-api.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "docvector.fullname" . }}-api
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "docvector.labels" . | nindent 4 }}
+    component: api
+spec:
+  type: {{ .Values.service.api.type }}
+  ports:
+  - port: {{ .Values.service.api.port }}
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "docvector.selectorLabels" . | nindent 4 }}
+    component: api

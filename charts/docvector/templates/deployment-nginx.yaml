@@ -1,0 +1,56 @@
+# charts/docvector/templates/deployment-nginx.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "docvector.fullname" . }}-nginx
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "docvector.labels" . | nindent 4 }}
+    component: nginx
+spec:
+  replicas: {{ .Values.replicaCount.nginx }}
+  selector:
+    matchLabels:
+      {{- include "docvector.selectorLabels" . | nindent 6 }}
+      component: nginx
+  template:
+    metadata:
+      labels:
+        {{- include "docvector.selectorLabels" . | nindent 8 }}
+        component: nginx
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: nginx
+        image: "{{ .Values.image.nginx.repository }}:{{ .Values.image.nginx.tag }}"
+        imagePullPolicy: {{ .Values.image.nginx.pullPolicy }}
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.nginx.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: {{ include "docvector.fullname" . }}-nginx

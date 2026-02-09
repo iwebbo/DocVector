@@ -1,0 +1,9 @@
+# charts/docvector/templates/namespace.yaml
+{{- if .Values.namespace.create }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace.name }}
+  labels:
+    {{- include "docvector.labels" . | nindent 4 }}
+{{- end }}
