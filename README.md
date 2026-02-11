@@ -1,4 +1,4 @@
-<img width="400" height="400" alt="docvectorio" src="https://github.com/user-attachments/assets/7184990c-2db0-49da-a099-e4b1f901394b" />
+<center><img width="300" height="300" alt="docvectorio" src="https://github.com/user-attachments/assets/7184990c-2db0-49da-a099-e4b1f901394b" /></center>
 
 # DocVector
 
