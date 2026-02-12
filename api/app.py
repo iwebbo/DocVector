@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 import sys
 from pathlib import Path
 import logging
+import traceback
 
-# Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import OpenSearchConfig, EmbeddingConfig, ChunkingConfig
@@ -43,6 +43,30 @@ def init_clients():
         embedder = EmbeddingGenerator(embed_config)
         chunker = TextChunker(chunk_config.max_chunk_size, chunk_config.overlap)
         pipeline = IngestionPipeline(os_client, embedder, chunker)
+
+        try:
+            index_exists = os_client.client.indices.exists(index=os_client.index_name)
+            
+            if index_exists:
+                count = os_client.count_documents()
+                logger.info(f"Index '{os_client.index_name}' already exist ({count} documents)")
+            else:
+                logger.info(f"Index '{os_client.index_name}' doesn't exist")
+                logger.info(f"Create index with Embedding {embedder.dimension}...")
+                
+                os_client.create_index(dimension=embedder.dimension)
+                
+                if os_client.client.indices.exists(index=os_client.index_name):
+                    logger.info(f"Index '{os_client.index_name}' created successfully")
+                else:
+                    logger.error(f"Issue with index creation '{os_client.index_name}'")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Issue index management : {e}")
+            logger.error(f"   Détails: {type(e).__name__}")
+            logger.error(traceback.format_exc())
+            return False
         
         logger.info("Clients initialized")
         return True
@@ -129,7 +153,27 @@ def ingest():
         total = pipeline.process_directory(upload_dir, batch_size=50)
         count = os_client.count_documents()
         
-        return jsonify({"success": True, "indexed": total, "total_documents": count})
+        cleaned_count = 0
+        for file in upload_dir.iterdir():
+            if file.is_file():
+                try:
+                    file.unlink()
+                    cleaned_count += 1
+                    logger.debug(f"Supprimé: {file.name}")
+                except Exception as e:
+                    logger.warning(f"Impossible de supprimer {file.name}: {e}")
+        
+        logger.info(f"Nettoyage: {cleaned_count} fichiers supprimés")
+        
+        return jsonify({
+            "success": True,
+            "indexed": total,
+            "total_documents": count,
+            "files_processed": len(files),
+            "files_cleaned": cleaned_count
+        })
+
+        #return jsonify({"success": True, "indexed": total, "total_documents": count})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
