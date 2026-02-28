@@ -33,30 +33,53 @@ A multi‑format document ingestion pipeline for OpenSearch with automatic vecto
 
 ### ☸️ **Quick Start with Docker**
 
-### 1. Clone the repository
+### Clone the repository
 ```bash
     git clone https://github.com/iwebbo/DocVector.git
     cd DocVector
 ```
 
-### 2. Configure OpenSearch
-
-Create a .env file at the project root:
-```env
-OPENSEARCH_HOST=opensearch.votre-domaine.com
-OPENSEARCH_PORT=9200
-OPENSEARCH_USER=admin
-OPENSEARCH_PASSWORD=votre-password
-OPENSEARCH_USE_SSL=true
-OPENSEARCH_VERIFY_CERTS=false
-INDEX_NAME=knowledge_base
+### Prepare the Network
+```bash
+docker network create docvector-network
 ```
 
-### 3. Build and run
+### Run the Backend (API)
 ```bash
-cd docker
-docker-compose build
-docker-compose up -d
+docker run -d \
+  --name docvector-api \
+  --network docvector-network \
+  -v $(pwd)/data:/app/data \
+  -e OPENSEARCH_HOST="opensearch.aecoding.local" \
+  -e OPENSEARCH_PORT=9200 \
+  -e OPENSEARCH_USER="admin" \
+  -e OPENSEARCH_PASSWORD="YOUR_SAFE_PASSWORD" \
+  -e OPENSEARCH_USE_SSL="true" \
+  -e OPENSEARCH_VERIFY_CERTS="false" \
+  -e INDEX_NAME="knowledge_base" \
+  -e PYTHONUNBUFFERED=1 \
+  --restart unless-stopped \
+  ghcr.io/iwebbo/docvector/api:main-ebc57c8
+```
+
+### Run the Frontend (Web UI)
+The user interface will be accessible on port 8080
+```bash
+docker run -d \
+  --name docvector-web \
+  --network docvector-network \
+  -p 8080:80 \
+  --restart unless-stopped \
+  ghcr.io/iwebbo/docvector/frontend:main-6261d08
+```
+
+### Configuration environments variables 
+```env
+OPENSEARCH_HOST	: Hostname or IP of your OpenSearch instance.
+OPENSEARCH_PORT : Port (default: 9200).
+OPENSEARCH_USER	: Admin username for OpenSearch.
+INDEX_NAME : The name of the index where vectors are stored.
+PYTHONUNBUFFERED : Ensures logs are sent straight to the terminal.
 ```
 
 ## Via the Web UI
