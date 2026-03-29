@@ -33,12 +33,11 @@ A multi‑format document ingestion pipeline for OpenSearch with automatic vecto
 
 ### ☸️ **Quick Start with Docker**
 
-### Clone the repository
+### 1. Clone the repository
 ```bash
     git clone https://github.com/iwebbo/DocVector.git
     cd DocVector
 ```
-
 ### Prepare the Network
 ```bash
 docker network create docvector-network
@@ -87,6 +86,28 @@ PYTHONUNBUFFERED : Ensures logs are sent straight to the terminal.
 - **Upload – Drag & drop your files**.
 - **Ingest – Click “Start Ingestion”.**
 - **Search – Perform RAG search on your documents.**
+
+## Via the API
+
+- **Upload – api/upload**.
+```bash
+curl -k -X POST https://docvector.local/api/upload \
+  -F "files[]=@infrastructure.md"
+```
+
+- **Ingest – api/ingest.**
+```bash
+curl -k -X POST https://docvector.local/api/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"recreate": false, "auto_cleanup": true}'
+```
+
+- **Search – Perform RAG search on your documents.**
+```bash
+curl -k -X POST https://docvector.local/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "server IP address", "top_k": 3}'
+```
 
 ##  OpenSearch Configuration
 Index Mapping
