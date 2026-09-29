@@ -208,8 +208,13 @@ ansible-playbook deploy_helm_generic.yml
 3. Push to `charts/**` → GitHub Actions packages and publishes chart
 
 ## Upgrade
+
+Ref : https://iwebbo.github.io/DocVector/index.yaml
 ```bash
+helm repo update
+
 helm upgrade docvector docvector/docvector \
+  --version X.Y.Z
   -n docvector \
   -f values.yaml \
   -f ingress.yaml
