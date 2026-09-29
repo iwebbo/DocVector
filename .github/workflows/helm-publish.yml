@@ -34,105 +34,176 @@ jobs:
     - name: Generate version
       id: version
       run: |
+        # Bump this value before each merge on main (a published version is never overwritten)
         VERSION="1.1.20"
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
     - name: Update Chart.yaml
       run: |
-        sed -i "s/version: .*/version: ${{ steps.version.outputs.version }}/" charts/docvector/Chart.yaml
-        sed -i "s/appVersion: .*/appVersion: \"${{ steps.version.outputs.version }}\"/" charts/docvector/Chart.yaml
+        # "^" anchors: without it, "apiVersion: v2" is also rewritten and the chart breaks
+        sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}/" charts/docvector/Chart.yaml
+        sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.version }}\"/" charts/docvector/Chart.yaml
         sed -i "s|{{ github_username }}|${{ github.repository_owner }}|g" charts/docvector/Chart.yaml
         sed -i "s|{{ github_username }}|${{ github.repository_owner }}|g" charts/docvector/values.yaml
+        sed -i "s|{{ github_username }}|${{ github.repository_owner }}|g" values.yaml ingress.yaml
         cat charts/docvector/Chart.yaml
 
     - name: Lint Helm chart
-      run: helm lint charts/docvector
+      run: |
+        helm lint charts/docvector -f values.yaml -f ingress.yaml
+        helm template docvector charts/docvector -n docvector -f values.yaml -f ingress.yaml > /dev/null
 
     - name: Package Helm chart
       run: |
-        mkdir -p charts
-        helm package charts/docvector -d charts/
-        ls -lah charts/
+        mkdir -p .release
+        helm package charts/docvector -d .release/
+        ls -lah .release/
+
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: gh-pages
+        fetch-depth: 0
+
+    - name: Refuse to overwrite a published version
+      run: |
+        PKG="docvector-${{ steps.version.outputs.version }}.tgz"
+        if [ -f "gh-pages/${PKG}" ]; then
+          echo "::error::${PKG} already published. Bump VERSION in 'Generate version'."
+          exit 1
+        fi
 
     - name: Create Helm index
       run: |
-        if [ -f charts/index.yaml ]; then
-          helm repo index charts/ --url https://${{ github.repository_owner }}.github.io/DocVector/ --merge charts/index.yaml
+        cp .release/*.tgz gh-pages/
+        if [ -f gh-pages/index.yaml ]; then
+          helm repo index gh-pages/ --url https://${{ github.repository_owner }}.github.io/DocVector/ --merge gh-pages/index.yaml
         else
-          helm repo index charts/ --url https://${{ github.repository_owner }}.github.io/DocVector/
+          helm repo index gh-pages/ --url https://${{ github.repository_owner }}.github.io/DocVector/
         fi
-        cat charts/index.yaml
+        cat gh-pages/index.yaml
+
+    - name: Publish example values files
+      run: |
+        # Downloadable templates: https://<owner>.github.io/DocVector/values.yaml and ingress.yaml
+        cp values.yaml gh-pages/values.yaml
+        cp ingress.yaml gh-pages/ingress.yaml
 
     - name: Create documentation
       run: |
-        cat > charts/README.md << 'EOF'
+        cat > gh-pages/README.md << 'EOF'
         # DocVector Helm Charts
         
         Kubernetes deployment chart for DocVector (API + Frontend + OpenSearch integration).
         
-        ## Add Repository
+        ## Prerequisites
+        
+        Check each item on YOUR cluster before installing:
+        
+        | Requirement | Check command | Used in |
+        |-------------|---------------|---------|
+        | Kubernetes 1.20+ | `kubectl version` | - |
+        | Helm 3.0+ | `helm version` | - |
+        | Ingress Controller | `kubectl get ingressclass` | `ingress.yaml` → `ingress.className` |
+        | StorageClass (or manual PV) | `kubectl get storageclass` | `values.yaml` → `persistence.storageClass` |
+        | OpenSearch reachable (HTTPS if security plugin enabled) | see below | `values.yaml` → `secrets.data` |
+        | DNS or `/etc/hosts` entry for your domain | `nslookup docvector.your-domain.com` | `ingress.yaml` → `hosts[].host` |
+        | ~2Gi RAM free per API pod | `kubectl top nodes` | `values.yaml` → `api.resources` |
+        
+        OpenSearch connectivity test from inside the cluster:
+        ```bash
+        kubectl run os-test --rm -it --restart=Never --image=curlimages/curl -- \
+          curl -sk -u admin:YOUR_PASSWORD https://YOUR_OPENSEARCH_HOST:9200
+        ```
+        
+        ## 1. Add Repository
         ```bash
         helm repo add docvector https://${{ github.repository_owner }}.github.io/DocVector/
         helm repo update
+        helm search repo docvector --versions --devel
         ```
         
-        ## Install Chart
+        ## 2. Get the configuration files
+        
+        Two files are required. Download the templates, then adapt them to your infrastructure:
         ```bash
-        helm upgrade --install docvector docvector/docvector \
-          --namespace docvector \
-          --create-namespace \
-          -f values.yaml \
-          -f ingress.yaml
-          ```
-
-        ## Default Values (values.yaml)
+        curl -O https://${{ github.repository_owner }}.github.io/DocVector/values.yaml
+        curl -O https://${{ github.repository_owner }}.github.io/DocVector/ingress.yaml
+        ```
+        
+        Or from the repository:
+        ```bash
+        git clone https://github.com/${{ github.repository_owner }}/DocVector.git
+        cd DocVector
+        ```
+        
+        All chart defaults: `helm show values docvector/docvector`
+        
+        ## 3. Adapt to your infrastructure
+        
+        | File | Key | What to set |
+        |------|-----|-------------|
+        | `values.yaml` | `namespace.name` | Must match `-n` in the helm command (default `docvector`) |
+        | `values.yaml` | `image.api.tag` / `image.nginx.tag` | Image version to deploy (never empty) |
+        | `values.yaml` | `persistence.storageClass` | Output of `kubectl get storageclass` |
+        | `values.yaml` | `secrets.data.OPENSEARCH_HOST` | Your OpenSearch host |
+        | `values.yaml` | `secrets.data.OPENSEARCH_USER` / `OPENSEARCH_PASSWORD` | Your OpenSearch credentials |
+        | `values.yaml` | `secrets.data.OPENSEARCH_USE_SSL` | `"true"` if OpenSearch is HTTPS (default with security plugin) |
+        | `values.yaml` | `secrets.data.INDEX_NAME` | Index name to use |
+        | `ingress.yaml` | `ingress.className` | Output of `kubectl get ingressclass` |
+        | `ingress.yaml` | `ingress.hosts[].host` | Your domain |
+        | `ingress.yaml` | `ingress.tls` | Only if you use HTTPS (see step 5) |
+        
+        ### values.yaml
         ```yaml
-        # Default values for DocVector Helm chart
         replicaCount:
-          api: 2
-          nginx: 2
-
+          api: 1
+          nginx: 1
+        
+        imagePullSecrets: []
+        
         image:
           api:
-            repository: ghcr.io/${{ github.repository_owner }}/docvector/api
-            tag: "latest"
-            pullPolicy: Always
+            repository: ghcr.io/${{ github.repository_owner }}/docvector-api
+            tag: "latest"            # pin a version in production
+            pullPolicy: IfNotPresent
           nginx:
-            repository: ghcr.io/${{ github.repository_owner }}/docvector/frontend
-            tag: "latest"
-            pullPolicy: Always
-
-        imagePullSecrets: []
-
+            repository: ghcr.io/${{ github.repository_owner }}/docvector-nginx
+            tag: "latest"            # pin a version in production
+            pullPolicy: IfNotPresent
+        
         namespace:
-          create: true
-          name: docvector
-
-        opensearch:
-          host: "opensearch.opensearch.svc.cluster.local"
-          port: "9200"
-          user: "admin"
-          password: "ChangeMe123!"
-          useSSL: "true"
-          verifyCerts: "false"
-          indexName: "knowledge_base"
-
+          name: docvector            # must match -n
+        
         persistence:
           enabled: true
-          storageClass: "standard"
+          storageClass: "standard"   # kubectl get storageclass
           accessMode: ReadWriteOnce
           size: 10Gi
-
+        
         api:
           resources:
             requests:
               memory: "1Gi"
-              cpu: "500m"
+              cpu: "250m"
             limits:
               memory: "2Gi"
               cpu: "1000m"
-
+          livenessProbe:
+            enabled: true
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            enabled: true
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+        
         nginx:
           resources:
             requests:
@@ -142,7 +213,7 @@ jobs:
               memory: "256Mi"
               cpu: "200m"
           clientMaxBodySize: "100m"
-
+        
         service:
           api:
             type: ClusterIP
@@ -150,27 +221,43 @@ jobs:
           nginx:
             type: ClusterIP
             port: 80
-
+        
         autoscaling:
           enabled: false
           minReplicas: 2
           maxReplicas: 10
           targetCPUUtilizationPercentage: 70
           targetMemoryUtilizationPercentage: 80
-          ```
-
-        ## Ingress Configuration (ingress.yaml)
+        
+        secrets:
+          create: true               # false = you create the Secret yourself (see step 4)
+          name: docvector-secrets
+          data:
+            OPENSEARCH_HOST: "opensearch.opensearch.svc.cluster.local"
+            OPENSEARCH_PORT: "9200"
+            OPENSEARCH_USER: "admin"
+            OPENSEARCH_PASSWORD: "ChangeMe"
+            OPENSEARCH_USE_SSL: "true"
+            OPENSEARCH_VERIFY_CERTS: "false"
+            INDEX_NAME: "knowledge_base"
+        
+        nodeSelector: {}
+        tolerations: []
+        affinity: {}
+        ```
+        
+        ### ingress.yaml
         ```yaml
         ingress:
           enabled: true
-          className: "nginx"
+          className: "nginx"         # kubectl get ingressclass
           annotations:
             nginx.ingress.kubernetes.io/proxy-body-size: "100m"
             nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
             nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
             # cert-manager.io/cluster-issuer: "letsencrypt-prod"
           hosts:
-            - host: docvector.local
+            - host: docvector.your-domain.com
               paths:
                 - path: /
                   pathType: Prefix
@@ -178,80 +265,92 @@ jobs:
           # - secretName: docvector-tls
           #   hosts:
           #     - docvector.your-domain.com
-          ```
-
-        ## Prerequisites
-        
-        - Kubernetes 1.20+
-        - Helm 3.0+
-        - Ingress Controller (nginx-ingress recommended)
-        - OpenSearch cluster (external or in-cluster)
-        
-        ## Configuration Files (at repo root)
-        
-        - `values.yaml` - Helm values (mandatory)
-        - `ingress.yaml` - Ingress configuration (mandatory)
-        
-        ## Quick Start
-        
-        ### 1. Clone and configure
-        ```bash
-        git clone https://github.com/${{ github.repository_owner }}/DocVector.git
-        cd DocVector
-        
-        # Edit OpenSearch connection
-        vim values.yaml
-        
-        # Edit domain
-        vim ingress.yaml
         ```
         
-        ### 2. Install
+        ## 4. Secrets (choose one mode)
+        
+        | | `secrets.create: true` | `secrets.create: false` |
+        |---|---|---|
+        | Who creates the Secret | The chart | You, before install |
+        | Password location | `values.yaml` | Never in Git |
+        | Managed by Helm | Yes | No |
+        | Usage | Dev / lab | Production |
+        
+        Mode `create: false`: set `secrets.create: false`, remove `secrets.data`, then:
         ```bash
-        helm install docvector docvector/docvector \
-          -n docvector \
+        kubectl create namespace docvector
+        kubectl create secret generic docvector-secrets -n docvector \
+          --from-literal=OPENSEARCH_HOST=opensearch.opensearch.svc.cluster.local \
+          --from-literal=OPENSEARCH_PORT=9200 \
+          --from-literal=OPENSEARCH_USER=admin \
+          --from-literal=OPENSEARCH_PASSWORD='ChangeMe' \
+          --from-literal=OPENSEARCH_USE_SSL=true \
+          --from-literal=OPENSEARCH_VERIFY_CERTS=false \
+          --from-literal=INDEX_NAME=knowledge_base
+        ```
+        
+        Rules in both modes: same namespace as the pods, name = `secrets.name`, exact key names above.
+        
+        ## 5. Certificate (optional, Ingress HTTPS only)
+        ```bash
+        kubectl create namespace docvector --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret tls docvector-tls \
+          --cert=your-domain.crt \
+          --key=your-domain.key \
+          -n docvector
+        ```
+        Then uncomment the `tls` block in `ingress.yaml`.
+        
+        ## 6. Install
+        
+        Production (stable version):
+        ```bash
+        helm upgrade --install docvector docvector/docvector \
+          --version X.Y.Z \
+          --namespace docvector \
           --create-namespace \
           -f values.yaml \
-          -f ingress.yaml
+          -f ingress.yaml \
+          --timeout 10m
         ```
         
-        ### 3. Verify
+        Fix / feature (pre-release, `--version` is mandatory):
         ```bash
-        kubectl get pods -n docvector
-        kubectl get ingress -n docvector
+        helm upgrade --install docvector docvector/docvector \
+          --version X.Y.Z-feature-name.N \
+          --namespace docvector \
+          --create-namespace \
+          -f values.yaml \
+          -f ingress.yaml \
+          --timeout 10m
         ```
         
-        ## Deploy with Ansible (Generic Pipeline)
-        ```bash
-        ansible-playbook deploy_helm_generic.yml
+        `--timeout 10m`: the first image pull (~800 MB) and model loading take several minutes.
         
-        # Using: https://github.com/iwebbo/Ansible/tree/main/roles/deploy_helmchart_stack_standalone
+        ## 7. Verify
+        ```bash
+        kubectl get pods,svc,ingress -n docvector
+        kubectl exec -n docvector deploy/docvector-api -c api -- env | grep -E "OPENSEARCH|INDEX"
+        kubectl logs -n docvector deploy/docvector-api -c api | grep -m1 "https://"
         ```
         
-        ## Chart Values
-        
-        | Parameter | Description | Default |
-        |-----------|-------------|---------|
-        | `replicaCount.api` | API replicas | 2 |
-        | `replicaCount.nginx` | Frontend replicas | 2 |
-        | `image.api.tag` | API image tag | latest |
-        | `image.nginx.tag` | Frontend image tag | latest |
-        | `opensearch.host` | OpenSearch host | opensearch.opensearch.svc.cluster.local |
-        | `persistence.size` | Data volume size | 10Gi |
-        | `ingress.enabled` | Enable Ingress | true |
-        
-        ## Build & Push Flow
-        
-        1. Push to `api/**` or `src/**` → GitHub Actions builds API image
-        2. Push to `front/**` → GitHub Actions builds frontend image
-        3. Push to `charts/**` → GitHub Actions packages and publishes chart
-        
-        ## Upgrade
+        ## Upgrade (rollout)
         ```bash
+        helm repo update
         helm upgrade docvector docvector/docvector \
+          --version X.Y.Z \
           -n docvector \
           -f values.yaml \
-          -f ingress.yaml
+          -f ingress.yaml \
+          --timeout 10m
+        ```
+        Always pass `-f values.yaml -f ingress.yaml`, otherwise your configuration is not applied.
+        
+        ## Rollback (failed test)
+        ```bash
+        helm history docvector -n docvector
+        helm rollback docvector 0 -n docvector          # 0 = previous revision
+        helm rollback docvector <REVISION> -n docvector # specific revision
         ```
         
         ## Uninstall
@@ -297,26 +396,43 @@ jobs:
                 - key: kubernetes.io/hostname
                   operator: In
                   values:
-                  - k8s-worker-01
-          ```
+                  - YOUR_WORKER_NODE        # kubectl get nodes
+        ```
         ```bash
         kubectl apply -f pv-data.yaml
-        helm install docvector docvector/docvector -f values.yaml -f ingress.yaml
         ```
         
-        ## Troubleshooting
+        ## Deploy with Ansible (Generic Pipeline)
         ```bash
-        # Check pods
+        ansible-playbook deploy_helm_generic.yml
+        
+        # Using: https://github.com/iwebbo/Ansible/tree/main/roles/deploy_helmchart_stack_standalone
+        ```
+        
+        ## Build & Push Flow
+        
+        1. Push to `api/**` or `src/**` → GitHub Actions builds API image
+        2. Push to `front/**` → GitHub Actions builds frontend image
+        3. Push to `charts/**`, `values.yaml` or `ingress.yaml` → GitHub Actions packages and publishes chart
+        
+        ## Troubleshooting
+        
+        | Symptom | Cause | Fix |
+        |---------|-------|-----|
+        | `OOMKilled` / exit code 137 | Memory limit too low | Raise `api.resources.limits.memory` |
+        | `CreateContainerConfigError` | Secret missing, wrong name or namespace | Check `secrets.name` and namespace |
+        | `RemoteDisconnected` on `http://...:9200` | HTTP sent to HTTPS OpenSearch | `OPENSEARCH_USE_SSL: "true"` |
+        | Empty `OPENSEARCH_*` in the pod | Key missing in `secrets.data` | Check key names |
+        | `nil pointer evaluating` on upgrade | Values key removed but still used by a template | Fix `values.yaml` |
+        | `context deadline exceeded` on probes | App failing at startup | Read the logs below |
+        | New image not deployed | Same tag reused + `IfNotPresent` | Always use a new image tag |
+        
+        ```bash
         kubectl get pods -n docvector
-        
-        # Check logs
+        kubectl describe pod -n docvector -l component=api
         kubectl logs -f -n docvector deployment/docvector-api
+        kubectl logs -n docvector deployment/docvector-api --previous
         kubectl logs -f -n docvector deployment/docvector-nginx
-        
-        # Check OpenSearch connection
-        kubectl exec -it -n docvector deployment/docvector-api -- curl -k https://opensearch:9200
-        
-        # Port-forward for local testing
         kubectl port-forward -n docvector svc/docvector-nginx 8080:80
         ```
         
@@ -324,20 +440,7 @@ jobs:
         
         Repository: https://github.com/${{ github.repository_owner }}/DocVector
         EOF
-        cat charts/README.md
-
-    - name: Checkout gh-pages branch
-      uses: actions/checkout@v4
-      with:
-        ref: gh-pages
-        path: gh-pages
-        fetch-depth: 0
-
-    - name: Copy charts to gh-pages
-      run: |
-        mkdir -p gh-pages
-        cp -r charts/* gh-pages/
-        ls -lah gh-pages/
+        cat gh-pages/README.md
 
     - name: Commit and push to gh-pages
       run: |
@@ -359,13 +462,15 @@ jobs:
         echo "### 📍 Repository URL" >> $GITHUB_STEP_SUMMARY
         echo "https://${{ github.repository_owner }}.github.io/DocVector/" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📥 Add Repository" >> $GITHUB_STEP_SUMMARY
+        echo "### 📥 Add Repository & get config files" >> $GITHUB_STEP_SUMMARY
         echo '```bash' >> $GITHUB_STEP_SUMMARY
         echo "helm repo add docvector https://${{ github.repository_owner }}.github.io/DocVector/" >> $GITHUB_STEP_SUMMARY
         echo "helm repo update" >> $GITHUB_STEP_SUMMARY
+        echo "curl -O https://${{ github.repository_owner }}.github.io/DocVector/values.yaml" >> $GITHUB_STEP_SUMMARY
+        echo "curl -O https://${{ github.repository_owner }}.github.io/DocVector/ingress.yaml" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 Install" >> $GITHUB_STEP_SUMMARY
         echo '```bash' >> $GITHUB_STEP_SUMMARY
-        echo "helm install docvector docvector/docvector -n docvector --create-namespace -f values.yaml -f ingress.yaml" >> $GITHUB_STEP_SUMMARY
+        echo "helm upgrade --install docvector docvector/docvector --version ${{ steps.version.outputs.version }} -n docvector --create-namespace -f values.yaml -f ingress.yaml --timeout 10m" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
