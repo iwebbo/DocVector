@@ -34,41 +34,9 @@ spec:
         env:
         - name: PYTHONUNBUFFERED
           value: "1"
-        - name: OPENSEARCH_HOST
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_HOST
-        - name: OPENSEARCH_PORT
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_PORT
-        - name: OPENSEARCH_USER
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_USER
-        - name: OPENSEARCH_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_PASSWORD
-        - name: OPENSEARCH_USE_SSL
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_USE_SSL
-        - name: OPENSEARCH_VERIFY_CERTS
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: OPENSEARCH_VERIFY_CERTS
-        - name: INDEX_NAME
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "docvector.fullname" . }}-opensearch
-              key: INDEX_NAME
+        envFrom:
+        - secretRef:
+            name: {{ .Values.secrets.name }}
         resources:
           {{- toYaml .Values.api.resources | nindent 10 }}
         {{- if .Values.api.livenessProbe.enabled }}

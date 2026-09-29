@@ -19,75 +19,105 @@ helm upgrade --install docvector docvector/docvector \
 
 ## Default Values (values.yaml)
 ```yaml
-# Default values for DocVector Helm chart
-replicaCount:
-  api: 2
-  nginx: 2
+  # charts/docvector/values.yaml
+  replicaCount:
+    api: 1
+    nginx: 1
 
-image:
+  # Container Registry
+  registry: ghcr.io
+  imagePullSecrets: []
+
+  image:
+    api:
+      repository: ghcr.io/docvector-api
+      tag: ""
+      pullPolicy: IfNotPresent
+    nginx:
+      repository: ghcr.io/docvector-nginx
+      tag: ""
+      pullPolicy: IfNotPresent
+
+  namespace:
+    name: docvector
+
+  # Storage
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    accessMode: ReadWriteOnce
+    size: 10Gi
+
+  # API Configuration
   api:
-    repository: ghcr.io/iwebbo/docvector/api
-    tag: "latest"
-    pullPolicy: Always
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    livenessProbe:
+      enabled: true
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      enabled: true
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  # Nginx Configuration
   nginx:
-    repository: ghcr.io/iwebbo/docvector/frontend
-    tag: "latest"
-    pullPolicy: Always
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+    clientMaxBodySize: "100m"
 
-imagePullSecrets: []
+  # Service
+  service:
+    api:
+      type: ClusterIP
+      port: 8000
+    nginx:
+      type: ClusterIP
+      port: 80
 
-namespace:
-  create: true
-  name: docvector
+  # Autoscaling (optionnel)
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
-opensearch:
-  host: "opensearch.opensearch.svc.cluster.local"
-  port: "9200"
-  user: "admin"
-  password: "ChangeMe123!"
-  useSSL: "true"
-  verifyCerts: "false"
-  indexName: "knowledge_base"
+  secrets:
+    create: true
+    name: docvector-secrets
+    data:
+      OPENSEARCH_HOST: "opensearch.opensearch.svc.cluster.local"
+      OPENSEARCH_PORT: "9200"
+      OPENSEARCH_USER: "admin"
+      OPENSEARCH_PASSWORD: "Password"
+      OPENSEARCH_USE_SSL: "true"
+      OPENSEARCH_VERIFY_CERTS: "false"
+      INDEX_NAME: "index_base"
 
-persistence:
-  enabled: true
-  storageClass: "standard"
-  accessMode: ReadWriteOnce
-  size: 10Gi
+  # Node selector
+  nodeSelector: {}
 
-api:
-  resources:
-    requests:
-      memory: "1Gi"
-      cpu: "500m"
-    limits:
-      memory: "2Gi"
-      cpu: "1000m"
+  # Tolerations
+  tolerations: []
 
-nginx:
-  resources:
-    requests:
-      memory: "128Mi"
-      cpu: "100m"
-    limits:
-      memory: "256Mi"
-      cpu: "200m"
-  clientMaxBodySize: "100m"
-
-service:
-  api:
-    type: ClusterIP
-    port: 8000
-  nginx:
-    type: ClusterIP
-    port: 80
-
-autoscaling:
-  enabled: false
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 70
-  targetMemoryUtilizationPercentage: 80
+  # Affinity
+  affinity: {}
   ```
 
 ## Ingress Configuration (ingress.yaml)
@@ -128,7 +158,7 @@ ingress:
 ### 1. Clone and configure
 ```bash
 git clone https://github.com/iwebbo/DocVector.git
-cd DocVector
+cd DocVector/charts/docvector
 
 # Edit OpenSearch connection
 vim values.yaml
