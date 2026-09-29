@@ -1,8 +1,7 @@
 # charts/docvector/values.yaml
-# Global settings
 replicaCount:
-  api: 2
-  nginx: 2
+  api: 1
+  nginx: 1
 
 # Container Registry
 registry: ghcr.io
@@ -11,27 +10,15 @@ imagePullSecrets: []
 image:
   api:
     repository: ghcr.io/docvector-api
-    tag: "latest"
-    pullPolicy: Always
+    tag: ""
+    pullPolicy: IfNotPresent
   nginx:
     repository: ghcr.io/docvector-nginx
-    tag: "latest"
-    pullPolicy: Always
+    tag: ""
+    pullPolicy: IfNotPresent
 
-# Namespace
 namespace:
-  create: true
   name: docvector
-
-# OpenSearch configuration
-opensearch:
-  host: "opensearch.opensearch.svc.cluster.local"
-  port: "9200"
-  user: "admin"
-  password: "ChangeMe123!"
-  useSSL: "true"
-  verifyCerts: "false"
-  indexName: "knowledge_base"
 
 # Storage
 persistence:
@@ -45,7 +32,7 @@ api:
   resources:
     requests:
       memory: "1Gi"
-      cpu: "500m"
+      cpu: "250m"
     limits:
       memory: "2Gi"
       cpu: "1000m"
@@ -89,6 +76,18 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
+
+secrets:
+  create: true
+  name: docvector-secrets
+  data:
+    OPENSEARCH_HOST: "opensearch.opensearch.svc.cluster.local"
+    OPENSEARCH_PORT: "9200"
+    OPENSEARCH_USER: "admin"
+    OPENSEARCH_PASSWORD: "Password"
+    OPENSEARCH_USE_SSL: "true"
+    OPENSEARCH_VERIFY_CERTS: "false"
+    INDEX_NAME: "index_base"
 
 # Node selector
 nodeSelector: {}

@@ -34,7 +34,7 @@ jobs:
     - name: Generate version
       id: version
       run: |
-        VERSION="1.0.0"
+        VERSION="1.1.20"
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
