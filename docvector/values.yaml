@@ -9,12 +9,12 @@ imagePullSecrets: []
 
 image:
   api:
-    repository: ghcr.io/docvector-api
-    tag: ""
+    repository: ghcr.io/iwebbo/docvector/api
+    tag: "latest"
     pullPolicy: IfNotPresent
   nginx:
-    repository: ghcr.io/docvector-nginx
-    tag: ""
+    repository: ghcr.io/iwebbo/docvector/frontend
+    tag: "latest"
     pullPolicy: IfNotPresent
 
 namespace:

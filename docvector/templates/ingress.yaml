@@ -1,5 +1,5 @@
 # charts/docvector/templates/ingress.yaml
-{{- $ingressConfig := .Files.Get "ingress.yaml" | fromYaml }}
+{{- $ingressConfig := dict "ingress" (default (dict) .Values.ingress) }}
 {{- if $ingressConfig.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
