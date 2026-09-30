@@ -3,8 +3,8 @@ apiVersion: v2
 name: docvector
 description: Document vectorization and RAG search platform with OpenSearch
 type: application
-version: 1.1.21
-appVersion: "1.1.21"
+version: 1.1.22
+appVersion: "1.1.22"
 keywords:
   - rag
   - opensearch
