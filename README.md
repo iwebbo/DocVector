@@ -58,7 +58,7 @@ docker run -d \
   -e INDEX_NAME="knowledge_base" \
   -e PYTHONUNBUFFERED=1 \
   --restart unless-stopped \
-  ghcr.io/iwebbo/docvector/api:main-ebc57c8
+  ghcr.io/iwebbo/docvector/api:latest
 ```
 
 ### Run the Frontend (Web UI)
@@ -69,7 +69,7 @@ docker run -d \
   --network docvector-network \
   -p 8080:80 \
   --restart unless-stopped \
-  ghcr.io/iwebbo/docvector/frontend:main-6261d08
+  ghcr.io/iwebbo/docvector/frontend:latest
 ```
 
 ### Configuration environments variables 
