@@ -3,9 +3,9 @@ entries:
   docvector:
   - apiVersion: v2
     appVersion: 1.1.22
-    created: "2026-09-30T18:08:26.519642296Z"
+    created: "2026-10-05T20:19:02.756775885Z"
     description: Document vectorization and RAG search platform with OpenSearch
-    digest: cfc2b62ec7a30f2d998399b516abce193f9c067e213f263112dbcfca64a35d02
+    digest: 12a5136a5537133efffd82a02e32d966d8fee5157fdaa1de0aa2d6140829322d
     home: https://github.com/iwebbo/DocVector
     icon: https://raw.githubusercontent.com/iwebbo/DocVector/main/icon.png
     keywords:
@@ -24,4 +24,4 @@ entries:
     urls:
     - https://iwebbo.github.io/DocVector/docvector-1.1.22.tgz
     version: 1.1.22
-generated: "2026-09-30T18:08:26.518943485Z"
+generated: "2026-10-05T20:19:02.75610457Z"
