@@ -83,23 +83,23 @@ jobs:
 
           Published on GitHub Container Registry:
 
-          - Backend: [${REPO_LC}/backend](https://github.com/users/${OWNER}/packages/container/package/${REPO_LC}%2Fbackend)
+          - Backend: [${REPO_LC}/api](https://github.com/users/${OWNER}/packages/container/package/${REPO_LC}%2Fapi)
           - Frontend: [${REPO_LC}/frontend](https://github.com/users/${OWNER}/packages/container/package/${REPO_LC}%2Ffrontend)
 
           ${FENCE}bash
-          docker pull ghcr.io/${IMAGE_BASE}/backend:latest
+          docker pull ghcr.io/${IMAGE_BASE}/api:latest
           docker pull ghcr.io/${IMAGE_BASE}/frontend:latest
 
-          Guide install : https://github.com/${OWNER}/AgentRAG.io
+          Guide install : https://github.com/${OWNER}/DocVector
           ${FENCE}
 
           ## Helm
 
           ${FENCE}bash
-          helm repo add agentragio https://${OWNER}.github.io/AgentRAG.io/
+          helm repo add agentragio https://${OWNER}.github.io/DocVector/
           helm repo update
 
-          Guide install : https://${OWNER}.github.io/AgentRAG.io/
+          Guide install : https://${OWNER}.github.io/DocVector/
           ${FENCE}
           EOF
             if [ -n "${PREV}" ]; then
