@@ -42,7 +42,7 @@ jobs:
       run: |
         set -euo pipefail
         OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-        CHART=charts/DocVector
+        CHART=charts/docvector
 
         sed -i "s/^version: .*/version: ${VERSION}/" "${CHART}/Chart.yaml"
         sed -i "s/^appVersion: .*/appVersion: \"${VERSION}\"/" "${CHART}/Chart.yaml"
