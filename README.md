@@ -9,6 +9,9 @@ A multi‑format document ingestion pipeline for OpenSearch with automatic vecto
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-4EAA25?style=for-the-badge&logo=Kubernetes&logoColor=black)
 ![Docker](https://img.shields.io/badge/Docker-0078D6?style=for-the-badge&logo=Docker&logoColor=black)
 ![Opensearch](https://img.shields.io/badge/Opensearch-0078D6?style=for-the-badge&logo=Opensearch&logoColor=black)
+---
+[![Version](https://img.shields.io/badge/Version-v1.1.24-blue?style=for-the-badge&logo=github)](https://github.com/iwebbo/DocVector/releases/tag/v1.1.24)
+---
 
 ## Features
 
