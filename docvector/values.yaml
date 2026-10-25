@@ -2,11 +2,9 @@
 replicaCount:
   api: 1
   nginx: 1
-
 # Container Registry
 registry: ghcr.io
 imagePullSecrets: []
-
 image:
   api:
     repository: ghcr.io/iwebbo/docvector/api
@@ -16,17 +14,14 @@ image:
     repository: ghcr.io/iwebbo/docvector/frontend
     tag: "latest"
     pullPolicy: IfNotPresent
-
 namespace:
   name: docvector
-
 # Storage
 persistence:
   enabled: true
   storageClass: "standard"
   accessMode: ReadWriteOnce
   size: 10Gi
-
 # API Configuration
 api:
   resources:
@@ -48,7 +43,8 @@ api:
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3
-
+  image:
+    tag: 1.1.24
 # Nginx Configuration
 nginx:
   resources:
@@ -59,7 +55,6 @@ nginx:
       memory: "256Mi"
       cpu: "200m"
   clientMaxBodySize: "100m"
-
 # Service
 service:
   api:
@@ -68,7 +63,6 @@ service:
   nginx:
     type: ClusterIP
     port: 80
-
 # Autoscaling (optionnel)
 autoscaling:
   enabled: false
@@ -76,7 +70,6 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
-
 secrets:
   create: true
   name: docvector-secrets
@@ -88,12 +81,12 @@ secrets:
     OPENSEARCH_USE_SSL: "true"
     OPENSEARCH_VERIFY_CERTS: "false"
     INDEX_NAME: "index_base"
-
 # Node selector
 nodeSelector: {}
-
 # Tolerations
 tolerations: []
-
 # Affinity
 affinity: {}
+frontend:
+  image:
+    tag: 1.1.24
