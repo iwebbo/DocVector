@@ -3,11 +3,13 @@ name: Helm Chart Package & Publish
 
 on:
   push:
-    branches: [ main ]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
     paths:
       - 'charts/**'
-      - 'values.yaml'
-      - 'ingress.yaml'
+      - 'values.yml'
+      - 'ingress.yml'
       - '.github/workflows/helm-publish.yml'
   workflow_dispatch:
 
